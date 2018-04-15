@@ -28,8 +28,8 @@
 ;; Global Constants
 
 (defvar finalPos 9) ; empty peg here, 9th peg is empty
-(defvar m 5) ; number of rows
-(defvar n 5) ; number of columns
+(defvar m 4) ; number of rows
+(defvar n 4) ; number of columns
 
 ;; ---------------------------------------------------------
 ;; ---------------------------------------------------------
@@ -78,7 +78,7 @@
 		(newpos (third rule)))
 		(and (= (abs (- jumper goner)) 1) (= (abs (- goner newpos)) 1)
 			(= (row jumper) (row goner))
-			(= (col goner) (col newpos))
+			(= (row goner) (row newpos))
 			(= (- jumper goner) (- goner newpos)))))
 
 
@@ -98,8 +98,7 @@
 		(and (= (abs (- (col jumper) (col goner))) 1)
 			(= (- (col jumper) (col goner)) (- (col goner) (col newpos)))
 			(= (abs (- (row jumper) (row goner))) 1)
-			(= (- (row jumper) (row goner)) (- (row goner) (row newpos)))
-			(= (- jumper goner) (- goner newpos)))))
+			(= (- (row jumper) (row goner)) (- (row goner) (row newpos))))))
 
 ; Is the rule allowed in state?
 (defun precondition (rule state)
