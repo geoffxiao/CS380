@@ -12,8 +12,6 @@
 #	 21:23:04 UTC 2018
 
 import random # For randomly flailing
-import math
-import copy
 
 # represent m x n board as a list
 # m = 3, n = 4
@@ -22,14 +20,12 @@ import copy
 #  7  6 5 4
 #  3  2 1 0
 #
-# board = binary number
-# ith digit = ith cell
-# 	1 = peg is occupied
-# 	0 = peg is not occupied
+# board = list of 11 elements
+# board = [a0, a1, ..., a11]
+# 1 = peg is occupied
+# 0 = peg is not occupied
 #
-# rule = [jumper, goner, newpos] 
-# jumper, goner, newpos = cell 0 to m * n - 1
-
+# Peg index starts from 0!
 
 # -----------------------------------------------------------
 # Global Constants
@@ -38,14 +34,15 @@ m = 4; # number of rows
 n = 4; # number of columns
 
 # Create initial state for m x n board
-initialState = ((2 ** ((m * n) + 1)) - 1) & (~(2 ** finalPos))
+initialState = [1 for i in range(0, m * n)] # all pos filled
+initialState[finalPos] = 0 # empty pos 9
 # -----------------------------------------------------------
 
 
 # Has the goal been reached?
 def goal(state) :
 	# only one peg remains and final peg is in 9th hole
-	if state == 2 ** finalPos:
+	if sum(state) == 1 and state[finalPos] == 1 :
 		return True
 
 	else :
@@ -55,14 +52,16 @@ def goal(state) :
 # Return new state that is the result of the rule application
 def applyRule(rule, state) :
 	# Don't modify the state passed to it
-	out = copy.copy(state)
+	out = state[:]
 
-	jumper = 2 ** rule[0]
-	goner = 2 ** rule[1]
-	newpos = 2 ** rule[2]
+	jumper = rule[0]
+	goner = rule[1]
+	newpos = rule[2]
 
 	# Create new state
-	out = out - jumper - goner + newpos
+	out[jumper] = 0
+	out[goner] = 0
+	out[newpos] = 1
 	return out
 
 # Get the row the cell is in
@@ -73,16 +72,11 @@ def row(cell) :
 def col(cell) :
 	return cell % n 
 
-# Get the cell (0/1) in state
-def access(state, cell) :
-	cellNum = state >> cell # state = 01010111, cell = 3, cellNum = 01010
-	return cellNum & 1 # 01010 & 00001 = 1	
-
 # Are jumper, goner, newpos left/right of one another?
 def precondLeftRight(rule, state) : 
-	jumper = int(math.log(rule[0], 2))
-	goner = int(math.log(rule[1], 2))
-	newpos = int(math.log(rule[2], 2))
+	jumper = rule[0]
+	goner = rule[1]
+	newpos = rule[2]
 
 	# seperated by 1 = adjacent
 	# on the same row
@@ -98,9 +92,9 @@ def precondLeftRight(rule, state) :
 
 # Are jumper, goner, newpos up/down of one another?
 def precondUpDown(rule, state) : 
-	jumper = int(math.log(rule[0], 2))
-	goner = int(math.log(rule[1], 2))
-	newpos = int(math.log(rule[2], 2))
+	jumper = rule[0]
+	goner = rule[1]
+	newpos = rule[2]
 
 	# in adjacent rows
 	# in the same column
@@ -115,9 +109,9 @@ def precondUpDown(rule, state) :
 
 # Are jumper, goner, newpos diagonal of one another?
 def precondDiag(rule, state) :
-	jumper = int(math.log(rule[0], 2))
-	goner = int(math.log(rule[1], 2))
-	newpos = int(math.log(rule[2], 2))
+	jumper = rule[0]
+	goner = rule[1]
+	newpos = rule[2]
 
 	# in adjacent columns
 	# in adjacent rows
@@ -134,16 +128,15 @@ def precondDiag(rule, state) :
 
 # Is the rule allowed in state?
 def precondition(rule, state) :
-	jumper = int(math.log(rule[0], 2))
-	goner = int(math.log(rule[1], 2))
-	newpos = int(math.log(rule[2], 2))
+	jumper = rule[0]
+	goner = rule[1]
+	newpos = rule[2]
 
 	# jumper, goner, newpos left/right, up/down, diag oriented
 	# jumper filled, goner filled, newpos empty
 	if (precondLeftRight(rule, state) or precondUpDown(rule, state) or \
 		precondDiag(rule, state)) and \
-		access(state, jumper) == 1 and access(state, goner) == 1 and \
-		access(state, newpos) == 0 :
+		state[jumper] == 1 and state[goner] == 1 and state[newpos] == 0 :
 		return True
 
 	else :
@@ -162,7 +155,7 @@ def applicableRules(state) :
 			for k in range(0, m * n) :
 
 				# Is the rule applicable?
-				if precondition([2 ** i, 2 ** j, 2 ** k], state) :
+				if precondition([i, j, k], state) :
 					out.append([i, j, k])
 
 	return out	
@@ -171,21 +164,20 @@ def applicableRules(state) :
 # Print the Peg Board
 # State = [a0, a1, a2, ...]
 def describeState(state) :
-	counter = m * n - 1
+	counter = 0
 
 	# Print the board from the top left hand corner a_m*n-1
-	toPrint = ''
+	reversedState = state[::-1] # [a_m*n-1, ..., a2, a1, a0]
 
 	for i in range(0, m) :
 		for j in range(0, n) :
-			cell = access(state, counter)
-			if cell == 1 :
+			if reversedState[counter] == 1 :
 				print 'X',
 
 			else :
 				print 'O',
 
-			counter = counter - 1
+			counter = counter + 1
 
 		print ''
 
@@ -201,8 +193,6 @@ def flailWildly(state) :
 	count = 0
 	newState = state
 	rules = applicableRules(state)
-
-	print rules
 
 	# Flail!
 	while (not goal(newState)) and rules != [] :
