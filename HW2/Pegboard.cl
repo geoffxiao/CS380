@@ -194,4 +194,24 @@
 						(flailWildly (applyRule (first availMoves) state) (+ 1 i))))))))
 
 ; Flail!
-(flailWildly initialState 0)
+; (flailWildly initialState 0)
+
+(defvar total 0)
+(defvar failures 0)
+(defun backTrack (stateList depthBound)
+	(progn 
+		(defvar total (+ total 1))
+		(let ((s (first stateList))
+				(ruleSet (applicableRules s)))
+			(if (member s stateList)
+				'Failed-1
+			(if (goal s)
+				'NIL
+			(if (> (list-length stateList) depthBound)
+				'Failed-3
+			(if (null stateList)
+				'Failed-4
+			'Good)))))))				
+			
+
+	)

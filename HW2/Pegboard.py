@@ -33,9 +33,9 @@ import copy
 
 # -----------------------------------------------------------
 # Global Constants
-finalPos = 1; # empty peg here, 9th peg is empty
-m = 3; # number of rows
-n = 3; # number of columns
+finalPos = 9; # empty peg here, 9th peg is empty
+m = 4; # number of rows
+n = 4; # number of columns
 
 # Create initial state for m x n board
 initialState = ((2 ** (m * n)) - 1) & (~(2 ** finalPos))
@@ -250,6 +250,7 @@ def backTrack(stateList, depthBound) :
 	ruleSet = applicableRules(s)
 
 	if stateList[1 : ] != [] and s in stateList[1 : ] :
+		backTrack.failures += 1
 		return 'Failed-1' # Cycle
 
 	# Dead-end
@@ -260,9 +261,11 @@ def backTrack(stateList, depthBound) :
 		return []
 
 	if len(stateList) > depthBound :
+		backTrack.failures += 1	
 		return 'Failed-3' # Too deep
 
 	if ruleSet == [] : # No Moves
+		backTrack.failures += 1	
 		return 'Failed-4'
 
 	for r in ruleSet :
@@ -286,7 +289,8 @@ def backTrack(stateList, depthBound) :
 			print path, ' at level ', len(stateList)
 			print newStateList
 			print ''
-	
+
+	backTrack.failures += 1
 	return 'Failed-5'
 
 
@@ -295,8 +299,11 @@ def backTrack(stateList, depthBound) :
 
 # Backtrack!
 backTrack.total = 0
+backTrack.failures = 0
 backTrackSolution = backTrack([initialState], 50)
 print 'Initial Board'
 describeState(initialState)
 print 'Backtrack solution:'
 print backTrackSolution
+print 'Total # Calls to backTrack: ', backTrack.total - 1
+print 'Total # of Failures: ', backTrack.failures
