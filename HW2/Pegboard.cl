@@ -197,21 +197,22 @@
 ; (flailWildly initialState 0)
 
 (defvar total 0)
-(defvar failures 0)
 (defun backTrack (stateList depthBound)
-	(progn 
-		(defvar total (+ total 1))
-		(let ((s (first stateList))
-				(ruleSet (applicableRules s)))
-			(if (member s stateList)
-				'Failed-1
-			(if (goal s)
-				'NIL
-			(if (> (list-length stateList) depthBound)
-				'Failed-3
-			(if (null stateList)
-				'Failed-4
-			'Good)))))))				
-			
+	(setq s (first stateList))
+	(setq ruleSet (applicableMoves s))
+	(setq total (+ 1 total))
+	(cond ((goal s) 'NIL)
+			((or (member s (rest stateList) :test 'equal) (> (list-length stateList) depthBound) 
+	 		(null ruleSet))
+					(progn (print 'Failed) 'Failed))
+			(T (loop for r in ruleSet
+				do (setq newState (applyRule r s)) 
+					(setq newStateList (cons newState stateList))
+					(format t "~%Call #~a:" total)
+					(describeState newState)
+					(setq path (backTrack newStateList depthBound))
+					(if (eq path 'Failed)
+						'Failed
+						(cons r path))))))
 
-	)
+(print (backTrack (cons initialState 'NIL) 20))
